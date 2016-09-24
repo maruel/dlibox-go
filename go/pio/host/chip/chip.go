@@ -9,6 +9,7 @@ import (
 	"github.com/maruel/dlibox/go/pio/host/allwinner"
 	"github.com/maruel/dlibox/go/pio/host/headers"
 	"github.com/maruel/dlibox/go/pio/host/internal"
+	"github.com/maruel/dlibox/go/pio/host/sysfs"
 	"github.com/maruel/dlibox/go/pio/protocols/analog"
 	"github.com/maruel/dlibox/go/pio/protocols/gpio"
 	"github.com/maruel/dlibox/go/pio/protocols/pins"
@@ -16,6 +17,14 @@ import (
 
 // Version is the board version. Only reports as 1 for now.
 var Version int = 1
+
+func pinByNumber(n int) gpio.PinIO {
+	p, err := sysfs.PinByNumber(n)
+	if err != nil {
+		panic(err)
+	}
+	return p
+}
 
 var (
 	U13_1  gpio.PinIO = pins.GROUND     //
@@ -71,14 +80,14 @@ var (
 	U14_10 gpio.PinIO   = pins.OTHER     // microphone ground
 	U14_11 analog.PinIO = pins.KEY_ADC   // low res analog to digital
 	U14_12 gpio.PinIO   = pins.OTHER     // microphone input
-	U14_13 gpio.PinIO   = pins.OTHER     // pins.XIOP0   // gpio via i2c controller
-	U14_14 gpio.PinIO   = pins.OTHER     // pins.XIOP1   // gpio via i2c controller
-	U14_15 gpio.PinIO   = pins.OTHER     // pins.XIOP2   // gpio via i2c controller
-	U14_16 gpio.PinIO   = pins.OTHER     // pins.XIOP3   // gpio via i2c controller
-	U14_17 gpio.PinIO   = pins.OTHER     // pins.XIOP4   // gpio via i2c controller
-	U14_18 gpio.PinIO   = pins.OTHER     // pins.XIOP5   // gpio via i2c controller
-	U14_19 gpio.PinIO   = pins.OTHER     // pins.XIOP6   // gpio via i2c controller
-	U14_20 gpio.PinIO   = pins.OTHER     // pins.XIOP7   // gpio via i2c controller
+	U14_13 gpio.PinIO   = pins.OTHER     // pinByNumber(1016) // gpio via i2c controller
+	U14_14 gpio.PinIO   = pins.OTHER     // pinByNumber(1017) // gpio via i2c controller
+	U14_15 gpio.PinIO   = pins.OTHER     // pinByNumber(1018) // gpio via i2c controller
+	U14_16 gpio.PinIO   = pins.OTHER     // pinByNumber(1019) // gpio via i2c controller
+	U14_17 gpio.PinIO   = pins.OTHER     // pinByNumber(1020) // gpio via i2c controller
+	U14_18 gpio.PinIO   = pins.OTHER     // pinByNumber(1021) // gpio via i2c controller
+	U14_19 gpio.PinIO   = pins.OTHER     // pinByNumber(1022) // gpio via i2c controller
+	U14_20 gpio.PinIO   = pins.OTHER     // pinByNumber(1023) // gpio via i2c controller
 	U14_21 gpio.PinIO   = pins.GROUND    //
 	U14_22 gpio.PinIO   = pins.GROUND    //
 	U14_23 gpio.PinIO   = allwinner.PG1  //
