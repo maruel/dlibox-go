@@ -7,6 +7,7 @@ package allwinner
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"strconv"
@@ -932,12 +933,10 @@ var mapping = [116][5]string{
 // Defaults to 0x01C20800 as per datasheet if could query the file system.
 func getBaseAddressPB() uint64 {
 	base := uint64(0x01C20800)
-	fmt.Printf("Looking for GPIO base\n")
 
 	// try the way it looks on pine64 first (Debian ??)
 	link, err := os.Readlink("/sys/bus/platform/drivers/sun50i-pinctrl/driver")
 	if err == nil {
-		fmt.Printf("Looking for GPIO base in sun50i-pinctrl\n")
 		parts := strings.SplitN(path.Base(link), ".", 2)
 		if len(parts) != 2 {
 			return base
@@ -952,7 +951,6 @@ func getBaseAddressPB() uint64 {
 	// next try the way it looks on C.H.I.P. (Debian wheezy)
 	// note that CHIP's r8 is a repackaging of the a13
 	items, _ := ioutil.ReadDir("/sys/bus/platform/drivers/sun5i-a13-pinctrl/")
-	fmt.Printf("Looking for GPIO base in sun5i-a13-pinctrl\n")
 	for _, item := range items {
 		if item.Mode()&os.ModeSymlink != 0 {
 			parts := strings.SplitN(path.Base(item.Name()), ".", 2)
@@ -963,13 +961,11 @@ func getBaseAddressPB() uint64 {
 			if err != nil {
 				continue
 			}
-			fmt.Printf("Found GPIO base: 0x%x\n", base2)
 			return base2
 		}
 	}
 
 	// return default constant
-	fmt.Printf("Defaulting GPIO base: 0x%x\n", base)
 	return base
 }
 
@@ -1007,7 +1003,7 @@ func (d *driver) Type() drivers.Type {
 }
 
 func (d *driver) Init() (bool, error) {
-	if !internal.IsAllwinner() {
+	if !internal.IsAllwinner() && !internal.IsAllwinnerR8() {
 		return false, nil
 	}
 	mem, err := gpiomem.OpenMem(getBaseAddressPB())
