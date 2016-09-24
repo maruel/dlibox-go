@@ -6,7 +6,7 @@ package chip
 
 import (
 	"github.com/maruel/dlibox/go/pio/drivers"
-	r8 "github.com/maruel/dlibox/go/pio/host/allwinner-r8"
+	r8 "github.com/maruel/dlibox/go/pio/host/allwinner"
 	"github.com/maruel/dlibox/go/pio/host/headers"
 	"github.com/maruel/dlibox/go/pio/host/internal"
 	"github.com/maruel/dlibox/go/pio/protocols/analog"

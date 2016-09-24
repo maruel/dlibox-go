@@ -53,7 +53,7 @@ func IsAllwinner() bool {
 //
 // https://en.wikipedia.org/wiki/Allwinner_Technology
 func IsAllwinnerR8() bool {
-	// TODO(tve): This is too ticklish.
+	// TODO(tve): The detection criterion is crap.
 	hardware, ok := CPUInfo()["Hardware"]
 	return ok && strings.HasPrefix(hardware, "Allwinner")
 }

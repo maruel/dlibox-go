@@ -138,6 +138,18 @@ var Pins = []Pin{
 	{number: 113, group: 0, offset: 10, name: "PL10", defaultPull: gpio.Float},
 	{number: 114, group: 0, offset: 11, name: "PL11", defaultPull: gpio.Float},
 	{number: 115, group: 0, offset: 12, name: "PL12", defaultPull: gpio.Float},
+	{number: 116, group: 9 * 1, offset: 10, name: "PB10", defaultPull: gpio.Float},
+	{number: 117, group: 9 * 1, offset: 11, name: "PB11", defaultPull: gpio.Float},
+	{number: 118, group: 9 * 1, offset: 12, name: "PB12", defaultPull: gpio.Float},
+	{number: 119, group: 9 * 1, offset: 13, name: "PB13", defaultPull: gpio.Float},
+	{number: 120, group: 9 * 1, offset: 14, name: "PB14", defaultPull: gpio.Float},
+	{number: 121, group: 9 * 1, offset: 15, name: "PB15", defaultPull: gpio.Float},
+	{number: 122, group: 9 * 1, offset: 16, name: "PB16", defaultPull: gpio.Float},
+	{number: 123, group: 9 * 1, offset: 17, name: "PB17", defaultPull: gpio.Float},
+	{number: 124, group: 9 * 1, offset: 18, name: "PB18", defaultPull: gpio.Float},
+	{number: 125, group: 9 * 3, offset: 25, name: "PD25", defaultPull: gpio.Float},
+	{number: 126, group: 9 * 3, offset: 26, name: "PD26", defaultPull: gpio.Float},
+	{number: 127, group: 9 * 3, offset: 27, name: "PD27", defaultPull: gpio.Float},
 }
 
 var functional = map[string]gpio.PinIO{
@@ -386,6 +398,15 @@ var (
 	PB7  gpio.PinIO = &Pins[7]   // 39
 	PB8  gpio.PinIO = &Pins[8]   // 40
 	PB9  gpio.PinIO = &Pins[9]   // 41
+	PB10 gpio.PinIO = &Pins[116] // TODO: renumber!
+	PB11 gpio.PinIO = &Pins[117] // TODO: renumber!
+	PB12 gpio.PinIO = &Pins[118] // TODO: renumber!
+	PB13 gpio.PinIO = &Pins[119] // TODO: renumber!
+	PB14 gpio.PinIO = &Pins[120] // TODO: renumber!
+	PB15 gpio.PinIO = &Pins[121] // TODO: renumber!
+	PB16 gpio.PinIO = &Pins[122] // TODO: renumber!
+	PB17 gpio.PinIO = &Pins[123] // TODO: renumber!
+	PB18 gpio.PinIO = &Pins[124] // TODO: renumber!
 	PC0  gpio.PinIO = &Pins[10]  //
 	PC1  gpio.PinIO = &Pins[11]  //
 	PC2  gpio.PinIO = &Pins[12]  //
@@ -428,6 +449,9 @@ var (
 	PD22 gpio.PinIO = &Pins[49]  //
 	PD23 gpio.PinIO = &Pins[50]  //
 	PD24 gpio.PinIO = &Pins[51]  //
+	PD25 gpio.PinIO = &Pins[125] // renumber!
+	PD26 gpio.PinIO = &Pins[126] // renumber!
+	PD27 gpio.PinIO = &Pins[127] // renumber!
 	PE0  gpio.PinIO = &Pins[52]  //
 	PE1  gpio.PinIO = &Pins[53]  //
 	PE2  gpio.PinIO = &Pins[54]  //
@@ -908,19 +932,45 @@ var mapping = [116][5]string{
 // Defaults to 0x01C20800 as per datasheet if could query the file system.
 func getBaseAddressPB() uint64 {
 	base := uint64(0x01C20800)
+	fmt.Printf("Looking for GPIO base\n")
+
+	// try the way it looks on pine64 first (Debian ??)
 	link, err := os.Readlink("/sys/bus/platform/drivers/sun50i-pinctrl/driver")
-	if err != nil {
-		return base
+	if err == nil {
+		fmt.Printf("Looking for GPIO base in sun50i-pinctrl\n")
+		parts := strings.SplitN(path.Base(link), ".", 2)
+		if len(parts) != 2 {
+			return base
+		}
+		base2, err := strconv.ParseUint(parts[0], 16, 64)
+		if err != nil {
+			return base
+		}
+		return base2
 	}
-	parts := strings.SplitN(path.Base(link), ".", 2)
-	if len(parts) != 2 {
-		return base
+
+	// next try the way it looks on C.H.I.P. (Debian wheezy)
+	// note that CHIP's r8 is a repackaging of the a13
+	items, _ := ioutil.ReadDir("/sys/bus/platform/drivers/sun5i-a13-pinctrl/")
+	fmt.Printf("Looking for GPIO base in sun5i-a13-pinctrl\n")
+	for _, item := range items {
+		if item.Mode()&os.ModeSymlink != 0 {
+			parts := strings.SplitN(path.Base(item.Name()), ".", 2)
+			if len(parts) != 2 {
+				continue
+			}
+			base2, err := strconv.ParseUint(parts[0], 16, 64)
+			if err != nil {
+				continue
+			}
+			fmt.Printf("Found GPIO base: 0x%x\n", base2)
+			return base2
+		}
 	}
-	base2, err := strconv.ParseUint(parts[0], 16, 64)
-	if err != nil {
-		return base
-	}
-	return base2
+
+	// return default constant
+	fmt.Printf("Defaulting GPIO base: 0x%x\n", base)
+	return base
 }
 
 // getBaseAddressPL queries the virtual file system to retrieve the base address
