@@ -798,7 +798,9 @@ var gpioMemoryPL []uint32
 
 var _ gpio.PinIO = &Pin{}
 
-// mapping excludes functions in and out.
+var mapping [128][5]string // set to either mappingA64 or mappingR8 in Init()
+
+// mappingA64 for Allwinner A64 - excludes functions in and out.
 // Datasheet, page 23.
 // http://files.pine64.org/doc/datasheet/pine64/A64_Datasheet_V1.1.pdf
 //
@@ -808,7 +810,7 @@ var _ gpio.PinIO = &Pin{}
 // - SDC means SDCard?
 // - NAND is for NAND flash controller
 // - CSI and CCI are for video capture
-var mapping = [116][5]string{
+var mappingA64 = [128][5]string{
 	{"UART2_TX", "", "JTAG_MS0", "", "PB_EINT0"},                    // PB0
 	{"UART2_RX", "", "JTAG_CK0", "SIM_PWREN", "PB_EINT1"},           // PB1
 	{"UART2_RTS", "", "JTAG_DO0", "SIM_VPPEN", "PB_EINT2"},          // PB2
@@ -860,71 +862,224 @@ var mapping = [116][5]string{
 	{"LCD_VSYNC", "LVDS_VN3", "RGMII_CLKI"},                         // PD21
 	{"PWM0", "", "MDC"},                                             // PD22
 	{"", "", "MDIO"},                                                // PD23
-	{"", ""},                                                        // PD24
-	{"CSI_PCLK", "", "TS_CLK"},                                      // PE0
-	{"CSI_MCLK", "", "TS_ERR"},                                      // PE1
-	{"CSI_HSYNC", "", "TS_SYNC"},                                    // PE2
-	{"CSI_VSYNC", "", "TS_DVLD"},                                    // PE3
-	{"CSI_D0", "", "TS_D0"},                                         // PE4
-	{"CSI_D1", "", "TS_D1"},                                         // PE5
-	{"CSI_D2", "", "TS_D2"},                                         // PE6
-	{"CSI_D3", "", "TS_D3"},                                         // PE7
-	{"CSI_D4", "", "TS_D4"},                                         // PE8
-	{"CSI_D5", "", "TS_D5"},                                         // PE9
-	{"CSI_D6", "", "TS_D6"},                                         // PE10
-	{"CSI_D7", "", "TS_D7"},                                         // PE11
-	{"CSI_SCK"},                                                     // PE12
-	{"CSI_SDA"},                                                     // PE13
-	{"PLL_LOCK_DBG", "I2C2_SCL"},                                    // PE14
-	{"", "I2C2_SDA"},                                                // PE15
-	{},                                                              // PE16
-	{"", ""},                                                        // PE17
-	{"SDC0_D1", "JTAG_MS1"},                                         // PF0
-	{"SDC0_D0", "JTAG_DI1"},                                         // PF1
-	{"SDC0_CLK", "UART0_TX"},                                        // PF2
-	{"SDC0_CMD", "JTAG_DO1"},                                        // PF3
-	{"SDC0_D3", "UART0_RX"},                                         // PF4
-	{"SDC0_D2", "JTAG_CK1"},                                         // PF5
-	{"", "", ""},                                                    // PF6
-	{"SDC1_CLK", "", "", "", "PG_EINT0"},                            // PG0
-	{"SDC1_CMD", "", "", "", "PG_EINT1"},                            // PG1
-	{"SDC1_D0", "", "", "", "PG_EINT2"},                             // PG2
-	{"SDC1_D1", "", "", "", "PG_EINT3"},                             // PG3
-	{"SDC1_D2", "", "", "", "PG_EINT4"},                             // PG4
-	{"SDC1_D3", "", "", "", "PG_EINT5"},                             // PG5
-	{"UART1_TX", "", "", "", "PG_EINT6"},                            // PG6
-	{"UART1_RX", "", "", "", "PG_EINT7"},                            // PG7
-	{"UART1_RTS", "", "", "", "PG_EINT8"},                           // PG8
-	{"UART1_CTS", "", "", "", "PG_EINT9"},                           // PG9
-	{"AIF3_SYNC", "PCM1_SYNC", "", "", "PG_EINT10"},                 // PG10
-	{"AIF3_BCLK", "PCM1_BCLK", "", "", "PG_EINT11"},                 // PG11
-	{"AIF3_DOUT", "PCM1_DOUT", "", "", "PG_EINT12"},                 // PG12
-	{"AIF3_DIN", "PCM1_DIN", "", "", "PG_EINT13"},                   // PG13
-	{"I2C0_SCL", "", "", "", "PH_EINT0"},                            // PH0
-	{"I2C0_SDA", "", "", "", "PH_EINT1"},                            // PH1
-	{"I2C1_SCL", "", "", "", "PH_EINT2"},                            // PH2
-	{"I2C1_SDA", "", "", "", "PH_EINT3"},                            // PH3
-	{"UART3_TX", "", "", "", "PH_EINT4"},                            // PH4
-	{"UART3_RX", "", "", "", "PH_EINT5"},                            // PH5
-	{"UART3_RTS", "", "", "", "PH_EINT6"},                           // PH6
-	{"UART3_CTS", "", "", "", "PH_EINT7"},                           // PH7
-	{"OWA_OUT", "", "", "", "PH_EINT8"},                             // PH8
-	{"", "", "", "", "PH_EINT9"},                                    // PH9
-	{"MIC_CLK", "", "", "", "PH_EINT10"},                            // PH10
-	{"MIC_DATA", "", "", "", "PH_EINT11"},                           // PH11
-	{"S_RSB_SCK", "S_I2C_SCL", "", "", "S_PL_EINT0"},                // PL0
-	{"S_RSB_SDA", "S_I2C_SDA", "", "", "S_PL_EINT1"},                // PL1
-	{"S_UART_TX", "", "", "", "S_PL_EINT2"},                         // PL2
-	{"S_UART_RX", "", "", "", "S_PL_EINT3"},                         // PL3
-	{"S_JTAG_MS", "", "", "", "S_PL_EINT4"},                         // PL4
-	{"S_JTAG_CK", "", "", "", "S_PL_EINT5"},                         // PL5
-	{"S_JTAG_DO", "", "", "", "S_PL_EINT6"},                         // PL6
-	{"S_JTAG_DI", "", "", "", "S_PL_EINT7"},                         // PL7
-	{"S_I2C_CSK", "", "", "", "S_PL_EINT8"},                         // PL8
-	{"S_I2C_SDA", "", "", "", "S_PL_EINT9"},                         // PL9
-	{"S_PWM", "", "", "", "S_PL_EINT10"},                            // PL10
-	{"S_CIR_RX", "", "", "", "S_PL_EINT11"},                         // PL11
-	{"", "", "", "", "S_PL_EINT12"},                                 // PL12
+	{},                                                              // PD24
+	{"CSI_PCLK", "", "TS_CLK"},   // PE0
+	{"CSI_MCLK", "", "TS_ERR"},   // PE1
+	{"CSI_HSYNC", "", "TS_SYNC"}, // PE2
+	{"CSI_VSYNC", "", "TS_DVLD"}, // PE3
+	{"CSI_D0", "", "TS_D0"},      // PE4
+	{"CSI_D1", "", "TS_D1"},      // PE5
+	{"CSI_D2", "", "TS_D2"},      // PE6
+	{"CSI_D3", "", "TS_D3"},      // PE7
+	{"CSI_D4", "", "TS_D4"},      // PE8
+	{"CSI_D5", "", "TS_D5"},      // PE9
+	{"CSI_D6", "", "TS_D6"},      // PE10
+	{"CSI_D7", "", "TS_D7"},      // PE11
+	{"CSI_SCK"},                  // PE12
+	{"CSI_SDA"},                  // PE13
+	{"PLL_LOCK_DBG", "I2C2_SCL"}, // PE14
+	{"", "I2C2_SDA"},             // PE15
+	{},                           // PE16
+	{},                           // PE17
+	{"SDC0_D1", "JTAG_MS1"},  // PF0
+	{"SDC0_D0", "JTAG_DI1"},  // PF1
+	{"SDC0_CLK", "UART0_TX"}, // PF2
+	{"SDC0_CMD", "JTAG_DO1"}, // PF3
+	{"SDC0_D3", "UART0_RX"},  // PF4
+	{"SDC0_D2", "JTAG_CK1"},  // PF5
+	{}, // PF6
+	{"SDC1_CLK", "", "", "", "PG_EINT0"},             // PG0
+	{"SDC1_CMD", "", "", "", "PG_EINT1"},             // PG1
+	{"SDC1_D0", "", "", "", "PG_EINT2"},              // PG2
+	{"SDC1_D1", "", "", "", "PG_EINT3"},              // PG3
+	{"SDC1_D2", "", "", "", "PG_EINT4"},              // PG4
+	{"SDC1_D3", "", "", "", "PG_EINT5"},              // PG5
+	{"UART1_TX", "", "", "", "PG_EINT6"},             // PG6
+	{"UART1_RX", "", "", "", "PG_EINT7"},             // PG7
+	{"UART1_RTS", "", "", "", "PG_EINT8"},            // PG8
+	{"UART1_CTS", "", "", "", "PG_EINT9"},            // PG9
+	{"AIF3_SYNC", "PCM1_SYNC", "", "", "PG_EINT10"},  // PG10
+	{"AIF3_BCLK", "PCM1_BCLK", "", "", "PG_EINT11"},  // PG11
+	{"AIF3_DOUT", "PCM1_DOUT", "", "", "PG_EINT12"},  // PG12
+	{"AIF3_DIN", "PCM1_DIN", "", "", "PG_EINT13"},    // PG13
+	{"I2C0_SCL", "", "", "", "PH_EINT0"},             // PH0
+	{"I2C0_SDA", "", "", "", "PH_EINT1"},             // PH1
+	{"I2C1_SCL", "", "", "", "PH_EINT2"},             // PH2
+	{"I2C1_SDA", "", "", "", "PH_EINT3"},             // PH3
+	{"UART3_TX", "", "", "", "PH_EINT4"},             // PH4
+	{"UART3_RX", "", "", "", "PH_EINT5"},             // PH5
+	{"UART3_RTS", "", "", "", "PH_EINT6"},            // PH6
+	{"UART3_CTS", "", "", "", "PH_EINT7"},            // PH7
+	{"OWA_OUT", "", "", "", "PH_EINT8"},              // PH8
+	{"", "", "", "", "PH_EINT9"},                     // PH9
+	{"MIC_CLK", "", "", "", "PH_EINT10"},             // PH10
+	{"MIC_DATA", "", "", "", "PH_EINT11"},            // PH11
+	{"S_RSB_SCK", "S_I2C_SCL", "", "", "S_PL_EINT0"}, // PL0
+	{"S_RSB_SDA", "S_I2C_SDA", "", "", "S_PL_EINT1"}, // PL1
+	{"S_UART_TX", "", "", "", "S_PL_EINT2"},          // PL2
+	{"S_UART_RX", "", "", "", "S_PL_EINT3"},          // PL3
+	{"S_JTAG_MS", "", "", "", "S_PL_EINT4"},          // PL4
+	{"S_JTAG_CK", "", "", "", "S_PL_EINT5"},          // PL5
+	{"S_JTAG_DO", "", "", "", "S_PL_EINT6"},          // PL6
+	{"S_JTAG_DI", "", "", "", "S_PL_EINT7"},          // PL7
+	{"S_I2C_CSK", "", "", "", "S_PL_EINT8"},          // PL8
+	{"S_I2C_SDA", "", "", "", "S_PL_EINT9"},          // PL9
+	{"S_PWM", "", "", "", "S_PL_EINT10"},             // PL10
+	{"S_CIR_RX", "", "", "", "S_PL_EINT11"},          // PL11
+	{"", "", "", "", "S_PL_EINT12"},                  // PL12
+	{}, // PB10
+	{}, // PB11
+	{}, // PB12
+	{}, // PB13
+	{}, // PB14
+	{}, // PB15
+	{}, // PB16
+	{}, // PB17
+	{}, // PB18
+	{}, // PD25
+	{}, // PD26
+	{}, // PD27
+}
+
+// mappingR8 for Allwinner R8, excludes functions in and out.
+// Datasheet, page 18.
+// https://github.com/NextThingCo/CHIP-Hardware/raw/master/CHIP%5Bv1_0%5D/CHIPv1_0-BOM-Datasheets/Allwinner%20R8%20Datasheet%20V1.2.pdf
+//
+// - The datasheet uses TWI instead of I2C but I renamed for consistency.
+// - AIF is audio interface, i.e. to connect to S/PDIF
+// - RGMII means Reduced gigabit media-independent interface
+// - SDC means SDCard?
+// - NAND is for NAND flash controller
+// - CSI and CCI are for video capture
+var mappingR8 = [128][5]string{
+	{"I2C0_SCL"},                    // PB0
+	{"I2C0_SDA"},                    // PB1
+	{"PWM", "", "", "", "EINT16"},   // PB2
+	{"IR_TX", "", "", "", "EINT17"}, // PB3
+	{"IR_RX", "", "", "", "EINT18"}, // PB4
+	{}, // PB5
+	{}, // PB6
+	{}, // PB7
+	{}, // PB8
+	{}, // PB9
+	{"NAND_WE", "SPI0_MOSI"},  // PC0
+	{"NAND_ALE", "SPI0_MISO"}, // PC1
+	{"NAND_CLE", "SPI0_CLK"},  // PC2
+	{"NAND_CE1", "SPI0_CS0"},  // PC3
+	{"NAND_CE0"},              // PC4
+	{"NAND_RE"},               // PC5
+	{"NAND_RB0", "SDC2_CMD"},  // PC6
+	{"NAND_RB1", "SDC2_CLK"},  // PC7
+	{"NAND_DQ0", "SDC2_D0"},   // PC8
+	{"NAND_DQ1", "SDC2_D1"},   // PC9
+	{"NAND_DQ2", "SDC2_D2"},   // PC10
+	{"NAND_DQ3", "SDC2_D3"},   // PC11
+	{"NAND_DQ4", "SDC2_D4"},   // PC12
+	{"NAND_DQ5", "SDC2_D5"},   // PC13
+	{"NAND_DQ6", "SDC2_D6"},   // PC14
+	{"NAND_DQ7", "SDC2_D7"},   // PC15
+	{}, // PC16
+	{}, // PD0
+	{}, // PD1
+	{"LCD_D2", "UART2_TX"},  // PD2
+	{"LCD_D3", "UART2_RX"},  // PD3
+	{"LCD_D4", "UART2_CTX"}, // PD4
+	{"LCD_D5", "UART2_RTS"}, // PD5
+	{"LCD_D6", "ECRS"},      // PD6
+	{"LCD_D7", "ECOL"},      // PD7
+	{},                      // PD8
+	{},                      // PD9
+	{"LCD_D10", "ERXD0"},    // PD10
+	{"LCD_D11", "ERXD1"},    // PD11
+	{"LCD_D12", "ERXD2"},    // PD12
+	{"LCD_D13", "ERXD3"},    // PD13
+	{"LCD_D14", "ERXCK"},    // PD14
+	{"LCD_D15", "ERXERR"},   // PD15
+	{},                                               // PD16
+	{},                                               // PD17
+	{"LCD_D18", "ERXDV"},                             // PD18
+	{"LCD_D19", "ETXD0"},                             // PD19
+	{"LCD_D20", "ETXD1"},                             // PD20
+	{"LCD_D21", "ETXD2"},                             // PD21
+	{"LCD_D22", "ETXD3"},                             // PD22
+	{"LCD_D23", "ETXEN"},                             // PD23
+	{"LCD_CLK", "ETXCK"},                             // PD24
+	{"TS_CLK", "CSI_PCLK", "SPI2_CS0", "", "EINT14"}, // PE0
+	{"TS_ERR", "CSI_MCLK", "SPI2_CLK", "", "EINT15"}, // PE1
+	{"TS_SYNC", "CSI_HSYNC", "SPI2_MOSI"},            // PE2
+	{"TS_DVLD", "CSI_VSYNC", "SPI2_MISO"},            // PE3
+	{"TS_D0", "CSI_D0", "SDC2_D0"},                   // PE4
+	{"TS_D1", "CSI_D1", "SDC2_D1"},                   // PE5
+	{"TS_D2", "CSI_D2", "SDC2_D2"},                   // PE6
+	{"TS_D3", "CSI_D3", "SDC2_D3"},                   // PE7
+	{"TS_D4", "CSI_D4", "SDC2_CMD"},                  // PE8
+	{"TS_D5", "CSI_D5", "SDC2_CLK"},                  // PE9
+	{"TS_D6", "CSI_D6", "UART1_TX"},                  // PE10
+	{"TS_D7", "CSI_D7", "UART1_RX"},                  // PE11
+	{}, // PE12
+	{}, // PE13
+	{}, // PE14
+	{}, // PE15
+	{}, // PE16
+	{}, // PE17
+	{"SDC0_D1", "", "JTAG_MS1"},  // PF0
+	{"SDC0_D0", "", "JTAG_DI1"},  // PF1
+	{"SDC0_CLK", "", "UART0_TX"}, // PF2
+	{"SDC0_CMD", "", "JTAG_DO1"}, // PF3
+	{"SDC0_D3", "", "UART0_RX"},  // PF4
+	{"SDC0_D2", "", "JTAG_CK1"},  // PF5
+	{}, // PF6
+	{"GPS_CLK", "", "", "", "EINT0"},  // PG0
+	{"GPS_SIGN", "", "", "", "EINT1"}, // PG1
+	{"GPS_MAG", "", "", "", "EINT2"},  // PG2
+	{"", "", "UART1_TX", "", "EINT3"}, // PG3
+	{"", "", "UART1_RX", "", "EINT4"}, // PG4
+	{}, // PG5
+	{}, // PG6
+	{}, // PG7
+	{}, // PG8
+	{"SPI1_CS0", "UART3_TX", "", "", "PG_EINT9"},    // PG9
+	{"SPI1_CLK", "UART3_RX", "", "", "PG_EINT10"},   // PG10
+	{"SPI1_MOSI", "UART3_CTS", "", "", "PG_EINT11"}, // PG11
+	{"SPI1_MISO", "UART3_RTS", "", "", "PG_EINT12"}, // PG12
+	{},                     // PG13
+	{},                     // PH0
+	{},                     // PH1
+	{},                     // PH2
+	{},                     // PH3
+	{},                     // PH4
+	{},                     // PH5
+	{},                     // PH6
+	{},                     // PH7
+	{},                     // PH8
+	{},                     // PH9
+	{},                     // PH10
+	{},                     // PH11
+	{},                     // PL0
+	{},                     // PL1
+	{},                     // PL2
+	{},                     // PL3
+	{},                     // PL4
+	{},                     // PL5
+	{},                     // PL6
+	{},                     // PL7
+	{},                     // PL8
+	{},                     // PL9
+	{},                     // PL10
+	{},                     // PL11
+	{},                     // PL12
+	{"SPI2_CS1"},           // PB10
+	{},                     // PB11
+	{},                     // PB12
+	{},                     // PB13
+	{},                     // PB14
+	{"I2C1_SCL"},           // PB15
+	{"I2C1_SDA"},           // PB16
+	{"I2C2_SCL"},           // PB17
+	{"I2C2_SDA"},           // PB18
+	{"LCD_DE", "ETXERR"},   // PD25
+	{"LCD_HSYNC", "EMDC"},  // PD26
+	{"LCD_VSYNC", "EMDIO"}, // PD27
 }
 
 // getBaseAddressPB queries the virtual file system to retrieve the base address
@@ -1003,7 +1158,12 @@ func (d *driver) Type() drivers.Type {
 }
 
 func (d *driver) Init() (bool, error) {
-	if !internal.IsAllwinner() && !internal.IsAllwinnerR8() {
+	switch {
+	case internal.IsAllwinner():
+		mapping = mappingA64
+	case internal.IsAllwinnerR8():
+		mapping = mappingR8
+	default:
 		return false, nil
 	}
 	mem, err := gpiomem.OpenMem(getBaseAddressPB())
