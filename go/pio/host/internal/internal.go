@@ -20,14 +20,17 @@ var (
 	osRelease map[string]string
 )
 
-func readAndSplit(path string) map[string]string {
-	bytes, err := ioutil.ReadFile("/proc/cpuinfo")
+// readAndSplit reads the file at path, splits each line at sep, and places each line
+// into a map with the first part as key and the second as value. It removes enclosing
+// quotes from the second part.
+func readAndSplit(path, sep string) map[string]string {
+	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil
 	}
 	out := map[string]string{}
 	for _, line := range strings.Split(string(bytes), "\n") {
-		parts := strings.SplitN(line, ":", 2)
+		parts := strings.SplitN(line, sep, 2)
 		if len(parts) != 2 {
 			continue
 		}
@@ -41,7 +44,7 @@ func readAndSplit(path string) map[string]string {
 			if len(s) > 2 && s[0] == '"' && s[len(s)-1] == '"' {
 				// Not exactly 100% right but #closeenough. See for more details
 				// https://www.freedesktop.org/software/systemd/man/os-release.html
-				s, err = strconv.Unquote(s[1 : len(s)-2])
+				s, err = strconv.Unquote(s)
 				if err != nil {
 					continue
 				}
@@ -58,7 +61,7 @@ func makeCPUInfo() map[string]string {
 	if cpuInfo == nil {
 		// Technically speaking, cpuinfo doesn't contain quotes and os-release
 		// doesn't contain duplicate keys. Make it more strictly correct if needed.
-		if m := readAndSplit("/proc/cpuinfo"); m != nil {
+		if m := readAndSplit("/proc/cpuinfo", ":"); m != nil {
 			cpuInfo = m
 		} else {
 			cpuInfo = map[string]string{}
@@ -73,7 +76,7 @@ func makeOSRelease() map[string]string {
 	if osRelease == nil {
 		// Technically speaking, cpuinfo doesn't contain quotes and os-release
 		// doesn't contain duplicate keys. Make it more strictly correct if needed.
-		if m := readAndSplit("/etc/os-release"); m != nil {
+		if m := readAndSplit("/etc/os-release", "="); m != nil {
 			osRelease = m
 		} else {
 			osRelease = map[string]string{}
