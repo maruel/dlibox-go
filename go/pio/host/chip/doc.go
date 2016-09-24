@@ -1,0 +1,11 @@
+// Copyright 2016 Marc-Antoine Ruel. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+// Package chip contains NextThing Co's C.H.I.P. hardware logic. It is intrinsically
+// related to package allwinner.
+//
+// Requires Debian
+//
+// References:
+package chip

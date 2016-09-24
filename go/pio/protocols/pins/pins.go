@@ -21,6 +21,7 @@ var (
 	// INVALID implements gpio.PinIO and fails on all access.
 	INVALID     invalidPin
 	GROUND      gpio.PinIO   = &pin{name: "GROUND"}
+	V1_8        gpio.PinIO   = &pin{name: "V1_8"}
 	V3_3        gpio.PinIO   = &pin{name: "V3_3"}
 	V5          gpio.PinIO   = &pin{name: "V5"}
 	VCC         gpio.PinIO   = &pin{name: "VCC"}         //
@@ -33,6 +34,7 @@ var (
 	PWR_SWITCH  gpio.PinIO   = &pin{name: "PWR_SWITCH"}  //
 	X32KFOUT    gpio.PinIO   = &pin{name: "X32KFOUT"}    // Clock output of 32Khz crystal
 	IOVCC       gpio.PinIO   = &pin{name: "IOVCC"}       // Power supply for port A
+	OTHER       gpio.PinIO   = &pin{name: "OTHER"}       // Something else...
 	KEY_ADC     analog.PinIO = &pin{name: "KEY_ADC"}     // 6 bits resolution ADC for key application; can work up to 250Hz conversion rate; reference voltage is 2.0V
 	EAROUTP     analog.PinIO = &pin{name: "EAROUTP"}     // Earpiece amplifier negative differential output
 	EAROUTN     analog.PinIO = &pin{name: "EAROUTN"}     // Earpiece amplifier positive differential output
