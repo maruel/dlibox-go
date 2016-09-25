@@ -8,6 +8,7 @@ package host
 import (
 	_ "github.com/maruel/dlibox/go/pio/host/allwinner"
 	_ "github.com/maruel/dlibox/go/pio/host/bcm283x"
+	_ "github.com/maruel/dlibox/go/pio/host/chip"
 	_ "github.com/maruel/dlibox/go/pio/host/pine64"
 	_ "github.com/maruel/dlibox/go/pio/host/rpi"
 )

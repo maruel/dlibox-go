@@ -49,6 +49,15 @@ func IsAllwinner() bool {
 	// /sys/class/sunxi_info/sys_info
 }
 
+// IsAllwinnerR8 returns true if running on an Allwinner R8 CPU.
+//
+// https://en.wikipedia.org/wiki/Allwinner_Technology
+func IsAllwinnerR8() bool {
+	// TODO(tve): The detection criterion is crap.
+	hardware, ok := CPUInfo()["Hardware"]
+	return ok && strings.HasPrefix(hardware, "Allwinner")
+}
+
 // Board
 
 // IsRaspberryPi returns true if running on a raspberry pi board.
@@ -67,4 +76,12 @@ func IsPine64() bool {
 	// This is iffy at best.
 	_, err := os.Stat("/boot/pine64.dtb")
 	return err == nil
+}
+
+// IsCHIP returns true if running on a NextThing Co's C.H.I.P. board.
+//
+// https://www.getchip.com/
+func IsCHIP() bool {
+	variant, ok := OSRelease()["VARIANT"]
+	return ok && strings.Contains(variant, "C.H.I.P")
 }
